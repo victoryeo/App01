@@ -21,7 +21,7 @@ class DiscoverRequest(private val context : Context, private val eventListener: 
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onReceive(context: Context, intent: Intent) {
 
-            Log.d("Receive", "start")
+            Log.d("Receive", intent.action.toString())
 
             if (BluetoothDevice.ACTION_FOUND.equals(intent.action)) {
                 val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
@@ -44,7 +44,7 @@ class DiscoverRequest(private val context : Context, private val eventListener: 
 
         if (bluetoothAdapter.isDiscovering)
             bluetoothAdapter.cancelDiscovery()
-        Log.d("Discover", "start")
+        Log.d("Discover", context.toString())
 
         // Register the BroadcastReceiver
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
