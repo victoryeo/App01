@@ -2,6 +2,7 @@ package com.example.app01
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,16 +16,19 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.app01.bluetooth.BluetoothConnectionService
 
-
 class MainActivity : AppCompatActivity() {
     private val bluetoothConnectionService : BluetoothConnectionService = BluetoothConnectionService(this)
 
-    @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT])
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //val bluetoothManager: BluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+        //val bluetoothAdapter = bluetoothManager.getAdapter()
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
+        Log.d("app", bluetoothAdapter.name)
         if (bluetoothAdapter == null) {
             // Device doesn't support Bluetooth
             Toast.makeText(this, "Bluetooth not supported", Toast.LENGTH_SHORT).show()
@@ -48,11 +52,11 @@ class MainActivity : AppCompatActivity() {
                 // for ActivityCompat#requestPermissions for more details.
                 return
             }
+            Toast.makeText(this, "Bluetooth not enabled", Toast.LENGTH_SHORT).show()
             startActivityForResult(enableBtIntent, 1)
         }
-        Log.d("app", "hello")
-        val permi = isPermissionsGranted(this)
-        Log.d("app", ""+permi)
+        val permit = isPermissionsGranted(this)
+        Log.d("app", "permit:"+permit)
         bluetoothConnectionService.discoverDevices()
 
     }
