@@ -2,27 +2,86 @@ package com.example.app01
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.app01.bluetooth.BluetoothConnectionService
 
 class MainActivity : AppCompatActivity() {
-    private val bluetoothConnectionService : BluetoothConnectionService = BluetoothConnectionService(this)
+    //LIST OF ARRAY STRINGS WHICH WILL SERVE AS LIST ITEMS
+    var listItems: ArrayList<String> = ArrayList()
 
+    //DEFINING A STRING ADAPTER WHICH WILL HANDLE THE DATA OF THE LISTVIEW
+    var adapter: ArrayAdapter<String>? = null
+
+    companion object {
+        const val REQUEST_ENABLE_BT = 42
+    }
+
+    //private val bluetoothConnectionService : BluetoothConnectionService = BluetoothConnectionService(this)
+    private val receiver = object : BroadcastReceiver() {
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        override fun onReceive(context: Context, intent: Intent) {
+            Log.d("app", intent.action.toString())
+            when (intent.action) {
+                BluetoothDevice.ACTION_FOUND -> {
+                    // Discovery has found a device. Get the BluetoothDevice
+                    // object and its info from the Intent.
+                    val device: BluetoothDevice =
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)!!
+                    val deviceName = device.name
+                    val deviceHardwareAddress = device.address // MAC address
+                    var msg = ""
+                    if (deviceName.isNullOrBlank()) {
+                        msg = deviceHardwareAddress
+                    } else {
+                        msg = "$deviceName $deviceHardwareAddress"
+                    }
+                    Log.d("DISCOVERING-DEVICE", msg)
+                    addItems(msg)
+                }
+
+                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                    Log.d("DISCOVERING-STARTED", "isDiscovering")
+                }
+
+                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                    Log.d("DISCOVERING-FINISHED", "FinishedDiscovering")
+                }
+            }
+        }
+    }
+
+    //METHOD WHICH WILL HANDLE DYNAMIC INSERTION
+    fun addItems(deviceName: String) {
+        //listItems.add(deviceName)
+        //adapter!!.notifyDataSetChanged()
+        adapter!!.add(deviceName);
+    }
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT])
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        adapter = ArrayAdapter<String>(
+            this,
+            android.R.layout.simple_list_item_1,
+            listItems
+        )
+        val list: ListView? = findViewById(R.id.btDevices);
+        list?.setAdapter(adapter)
 
         //val bluetoothManager: BluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         //val bluetoothAdapter = bluetoothManager.getAdapter()
@@ -53,17 +112,36 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             Toast.makeText(this, "Bluetooth not enabled", Toast.LENGTH_SHORT).show()
-            startActivityForResult(enableBtIntent, 1)
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
         }
         val permit = isPermissionsGranted(this)
-        Log.d("app", "permit:"+permit)
-        bluetoothConnectionService.discoverDevices()
-
+        Log.d("app", "permit:$permit")
+        if (!permit) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION),
+                642)
+        }
+        //bluetoothConnectionService.discoverDevices()
+        if (bluetoothAdapter.isDiscovering) {
+            bluetoothAdapter.cancelDiscovery()
+        }
+        var filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+        this.registerReceiver(receiver, filter)
+        filter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        this.registerReceiver(receiver, filter)
+        filter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        this.registerReceiver(receiver, filter)
+        bluetoothAdapter.startDiscovery()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        bluetoothConnectionService.cleanUp()
+        //bluetoothConnectionService.cleanUp()
+        unregisterReceiver(receiver)
     }
 
     private fun isPermissionsGranted(context: Context): Boolean {
