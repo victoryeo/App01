@@ -8,13 +8,18 @@
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello" />
+        android:text="Hello Bluetooth" />
 
     <EditText
-        android:id="@+id/editTextText"
+        android:id="@+id/deviceHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="text"
-        android:text="Name" />
+        android:text="Devices" />
+
+    <ListView
+        android:id="@+id/btDevices"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </LinearLayout>
