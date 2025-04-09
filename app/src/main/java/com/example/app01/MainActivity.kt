@@ -21,10 +21,10 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     //LIST OF ARRAY STRINGS WHICH WILL SERVE AS LIST ITEMS
-    var listItems: ArrayList<String> = ArrayList()
+    private var listItems: ArrayList<String> = ArrayList()
 
     //DEFINING A STRING ADAPTER WHICH WILL HANDLE THE DATA OF THE LISTVIEW
-    var adapter: ArrayAdapter<String>? = null
+    private var adapter: ArrayAdapter<String>? = null
 
     companion object {
         const val REQUEST_ENABLE_BT = 42
