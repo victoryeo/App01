@@ -7,17 +7,21 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.util.Log
 import androidx.annotation.RequiresPermission
-import com.example.app01.bluetooth.IBluetoothEventListener
 import java.util.*
 
 class DiscoverRequest(private val context : Context, private val eventListener: IBluetoothEventListener) : IBluetoothRequest  {
 
     private var discoveredDevices:MutableList<BluetoothDevice> = mutableListOf()
-    private var bluetoothAdapter : BluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    //private val bluetoothManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+    private var bluetoothAdapter : BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
     private val discoverReceiver = object : BroadcastReceiver() {
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onReceive(context: Context, intent: Intent) {
+
+            Log.d("Receive", "start")
 
             if (BluetoothDevice.ACTION_FOUND.equals(intent.action)) {
                 val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
@@ -38,17 +42,16 @@ class DiscoverRequest(private val context : Context, private val eventListener: 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun discover() {
 
-        // Check if Bluetooth is supported
-        if (bluetoothAdapter == null) {
-            // Bluetooth not supported
-            return;
-        }
-
         if (bluetoothAdapter.isDiscovering)
             bluetoothAdapter.cancelDiscovery()
+        Log.d("Discover", "start")
+
+        // Register the BroadcastReceiver
+        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+        context.registerReceiver(discoverReceiver, filter)
 
         bluetoothAdapter.startDiscovery()
-        eventListener.onDiscovering()
+        //eventListener.onDiscovering()
     }
 
     private fun registerReceiver() {
